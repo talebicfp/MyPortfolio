@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Client Portfolio Review | TWR & Benchmark Analytics</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root{
+      --bg:#070b12; --panel:#101722; --panel2:#141e2c; --text:#edf3fb; --muted:#9eabbc;
+      --line:#253244; --accent:#70e1b5; --warn:#ffd166; --bad:#ff6b6b; --good:#6ee7a8; --blue:#7ab7ff;
+      --shadow:0 16px 40px rgba(0,0,0,.28); --radius:18px;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:linear-gradient(135deg,#050810,#0a1020 58%,#071320);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:var(--text)}
+    header{position:sticky;top:0;z-index:20;background:rgba(7,11,18,.94);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+    .header-inner{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:18px 22px;max-width:1440px;margin:0 auto}
+    h1{margin:0;font-size:clamp(1.35rem,2.2vw,2.2rem);letter-spacing:-.03em}.sub{color:var(--muted);font-size:.92rem;margin-top:4px}.pill{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:#0d1420;border-radius:999px;padding:8px 12px;color:var(--muted);font-size:.85rem;white-space:nowrap}.dot{width:9px;height:9px;border-radius:999px;background:var(--accent);box-shadow:0 0 18px var(--accent)}
+    main{max-width:1440px;margin:0 auto;padding:22px;display:grid;gap:18px}.grid{display:grid;gap:16px}.grid.cols-4{grid-template-columns:repeat(4,minmax(0,1fr))}.grid.cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}.grid.cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .card{background:linear-gradient(180deg,var(--panel),#0d1420);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px}.card h2{margin:0 0 12px;font-size:1.05rem;letter-spacing:-.01em}.card h3{margin:0 0 8px;font-size:.95rem;color:#dbe7f6}.muted{color:var(--muted)}.small{font-size:.84rem}.metric{font-size:1.65rem;font-weight:800;letter-spacing:-.04em}.metric.good,.good{color:var(--good)}.metric.bad,.bad{color:var(--bad)}.warn{color:var(--warn)}.blue{color:var(--blue)}
+    .upload{border:1px dashed #40506a;border-radius:16px;padding:18px;background:#0b121d}.controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center}input,select,button{font:inherit}input[type="file"],input[type="number"],select{background:#0a111b;color:var(--text);border:1px solid var(--line);border-radius:12px;padding:10px;max-width:100%}button{background:linear-gradient(135deg,#1f9d6d,#2dd4bf);color:#03100c;border:0;border-radius:12px;padding:10px 14px;font-weight:800;cursor:pointer}button.secondary{background:#172233;color:var(--text);border:1px solid var(--line)}button:disabled{opacity:.55;cursor:not-allowed}
+    table{width:100%;border-collapse:collapse;font-size:.9rem}th,td{padding:10px;border-bottom:1px solid var(--line);text-align:right;vertical-align:top}th:first-child,td:first-child{text-align:left}th{color:var(--muted);font-weight:700;background:#0d1521;position:sticky;top:78px;z-index:2}.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:14px;max-height:470px}.badge{display:inline-block;border-radius:999px;padding:4px 8px;font-size:.76rem;border:1px solid var(--line);color:var(--muted);background:#0b121c}.badge.good{border-color:rgba(110,231,168,.4);color:var(--good)}.badge.bad{border-color:rgba(255,107,107,.4);color:var(--bad)}.badge.warn{border-color:rgba(255,209,102,.4);color:var(--warn)}
+    canvas{width:100%!important;max-height:380px}.explain{line-height:1.55;color:#cbd7e6}.kpi-row{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}.kpi-row + .kpi-row{border-top:1px solid var(--line);padding-top:12px;margin-top:12px}.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}.hidden{display:none!important}.footer{color:var(--muted);font-size:.82rem;line-height:1.55;padding-bottom:30px}
+    @media(max-width:1050px){.grid.cols-4{grid-template-columns:repeat(2,minmax(0,1fr))}.grid.cols-3{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    @media(max-width:720px){.header-inner{align-items:flex-start;flex-direction:column}.grid.cols-4,.grid.cols-3,.grid.cols-2{grid-template-columns:1fr}main{padding:14px}.card{padding:14px}.metric{font-size:1.35rem}th{position:static}table{font-size:.82rem}.controls{flex-direction:column;align-items:stretch}button,input,select{width:100%}}
+  </style>
+</head>
+<body>
+<header>
+  <div class="header-inner">
+    <div>
+      <h1>Client Portfolio Review</h1>
+      <div class="sub">Time-weighted return, risk-adjusted performance, and benchmark comparison</div>
+    </div>
+    <div class="controls">
+      <span class="pill"><span class="dot"></span><span id="statusText">Ready</span></span>
+      <span class="pill">Last updated: <span id="lastUpdated">—</span></span>
+    </div>
+  </div>
+</header>
+<main>
+  <section class="card upload">
+    <h2>Upload full transaction history CSV</h2>
+    <p class="explain">Use a full transaction file for accurate time-weighted return. Buys and sells are internal portfolio activity. Deposits and withdrawals are external cash flows and are neutralized in the TWR calculation.</p>
+    <div class="controls">
+      <input type="file" id="csvFile" accept=".csv,text/csv" />
+      <select id="benchmarkSelect">
+        <option value="SPY">Primary benchmark: SPY</option>
+        <option value="QQQ">Primary benchmark: QQQ</option>
+        <option value="VTI">Primary benchmark: VTI</option>
+        <option value="IWM">Primary benchmark: IWM</option>
+        <option value="AGG">Primary benchmark: AGG</option>
+      </select>
+      <input type="number" id="riskFree" step="0.1" value="4.0" title="Annual risk-free rate" />
+      <button id="runBtn" disabled>Analyze Portfolio</button>
+      <button class="secondary" id="sampleBtn">Load Sample</button>
+    </div>
+    <p class="small muted">Required CSV columns: <span class="mono">date,ticker,action,quantity,price,fees,cash_flow</span>. Actions: buy, sell, deposit, withdrawal, dividend, interest, fee. Processing happens in the browser.</p>
+  </section>
+
+  <section class="grid cols-4" id="kpiGrid">
+    <div class="card"><h2>Portfolio TWR</h2><div class="metric" id="kpiTwr">—</div><div class="small muted">Linked daily sub-period returns</div></div>
+    <div class="card"><h2>Benchmark Return</h2><div class="metric" id="kpiBench">—</div><div class="small muted" id="benchLabel">Selected benchmark</div></div>
+    <div class="card"><h2>Annualized Volatility</h2><div class="metric" id="kpiVol">—</div><div class="small muted">Portfolio daily return volatility</div></div>
+    <div class="card"><h2>Sharpe Ratio</h2><div class="metric" id="kpiSharpe">—</div><div class="small muted">Using selected risk-free rate</div></div>
+  </section>
+
+  <section class="grid cols-2">
+    <div class="card"><h2>Growth of $10,000</h2><canvas id="growthChart"></canvas></div>
+    <div class="card"><h2>Drawdown</h2><canvas id="drawdownChart"></canvas></div>
+  </section>
+
+  <section class="grid cols-3">
+    <div class="card"><h2>Risk-Adjusted Scorecard</h2><div class="table-wrap"><table id="scoreTable"></table></div></div>
+    <div class="card"><h2>Benchmark Comparison</h2><div class="table-wrap"><table id="benchTable"></table></div></div>
+    <div class="card"><h2>Portfolio Diagnostics</h2><div id="diagnostics" class="explain muted">Upload a CSV to generate diagnostics.</div></div>
+  </section>
+
+  <section class="grid cols-2">
+    <div class="card"><h2>Current Holdings</h2><div class="table-wrap"><table id="holdingsTable"></table></div></div>
+    <div class="card"><h2>Transactions Parsed</h2><div class="table-wrap"><table id="txTable"></table></div></div>
+  </section>
+
+  <section class="card">
+    <h2>Methodology</h2>
+    <div class="explain">
+      <p><strong>Time-weighted return</strong> is calculated by linking daily sub-period portfolio returns while neutralizing external deposits and withdrawals. This is generally the preferred measure for evaluating investment management performance because it reduces the distortion caused by when a client adds or removes money.</p>
+      <p><strong>Money-weighted return / IRR</strong> is useful for understanding the investor's actual dollar experience. This page prioritizes TWR for benchmark comparison and includes benchmark-relative statistics such as beta, alpha, tracking error, information ratio, and capture ratios.</p>
+      <p class="muted small">Data note: this static GitHub Pages version uses public browser-side market data endpoints. For compliance-grade client reporting, connect the same calculation engine to a controlled backend and licensed data source.</p>
+    </div>
+  </section>
+  <div class="footer">Educational analytics only. Not investment advice. Verify holdings, transaction classification, prices, corporate actions, and benchmark selection before using in a client report.</div>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+let transactions = [];
+let growthChart, drawdownChart;
+const BENCHES = ['SPY','QQQ','VTI','IWM','AGG'];
+const SAMPLE = `date,ticker,action,quantity,price,fees,cash_flow
+2023-01-03,CASH,deposit,0,0,0,50000
+2023-01-04,SPY,buy,40,380.82,0,0
+2023-01-05,QQQ,buy,70,260.15,0,0
+2023-04-10,MSFT,buy,25,289.39,0,0
+2023-07-12,NVDA,buy,40,43.50,0,0
+2023-09-15,CASH,deposit,0,0,0,10000
+2023-09-18,AAPL,buy,30,177.97,0,0
+2023-12-20,SPY,sell,10,469.06,0,0
+2024-02-15,NVDA,sell,10,72.66,0,0
+2024-05-01,CASH,withdrawal,0,0,0,-5000
+2024-06-10,AVGO,buy,5,143.00,0,0
+2024-10-15,MSFT,dividend,0,0,0,18.75
+2025-01-10,QQQ,buy,10,515.20,0,0`;
+function fmtPct(x){return Number.isFinite(x)?(x*100).toFixed(2)+'%':'—'}
+function fmtNum(x){return Number.isFinite(x)?x.toLocaleString(undefined,{maximumFractionDigits:2}):'—'}
+function fmtUsd(x){return Number.isFinite(x)?x.toLocaleString(undefined,{style:'currency',currency:'USD',maximumFractionDigits:0}):'—'}
+function setStatus(t){$('statusText').textContent=t;$('lastUpdated').textContent=new Date().toLocaleString();}
+function parseCSV(text){
+  const rows=[]; let cur='', row=[], inQ=false;
+  for(let i=0;i<text.length;i++){const c=text[i], n=text[i+1]; if(c==='"'){ if(inQ&&n==='"'){cur+='"';i++;} else inQ=!inQ; } else if(c===','&&!inQ){row.push(cur);cur='';} else if((c==='\n'||c==='\r')&&!inQ){ if(c==='\r'&&n==='\n') i++; row.push(cur); if(row.some(v=>v.trim()!=='')) rows.push(row); row=[]; cur=''; } else cur+=c;}
+  if(cur||row.length){row.push(cur); if(row.some(v=>v.trim()!=='')) rows.push(row)}
+  const headers=rows.shift().map(h=>h.trim().toLowerCase());
+  return rows.map(r=>Object.fromEntries(headers.map((h,i)=>[h,(r[i]||'').trim()])));
+}
+function normalizeTx(rows){
+  return rows.map((r,idx)=>({
+    idx:idx+1,date:r.date,ticker:(r.ticker||'CASH').toUpperCase(),action:(r.action||'').toLowerCase(),
+    quantity:parseFloat(r.quantity||0)||0,price:parseFloat(r.price||0)||0,fees:parseFloat(r.fees||0)||0,cash_flow:parseFloat(r.cash_flow||0)||0
+  })).filter(r=>r.date && r.action).sort((a,b)=>new Date(a.date)-new Date(b.date));
+}
+function uniqueTickers(tx){return [...new Set(tx.filter(t=>!['CASH','USD'].includes(t.ticker) && ['buy','sell','dividend'].includes(t.action)).map(t=>t.ticker))]}
+function dateKey(d){return d.toISOString().slice(0,10)}
+function addDays(d,n){let x=new Date(d); x.setDate(x.getDate()+n); return x}
+function businessDays(start,end){let out=[], d=new Date(start); while(d<=end){let day=d.getDay(); if(day!==0&&day!==6) out.push(dateKey(d)); d=addDays(d,1)} return out}
+async function fetchChart(symbol,start,end){
+  const p1=Math.floor(new Date(start+'T00:00:00Z').getTime()/1000), p2=Math.floor(addDays(new Date(end+'T00:00:00Z'),1).getTime()/1000);
+  const urls=[`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?period1=${p1}&period2=${p2}&interval=1d&events=history&includeAdjustedClose=true`,
+              `https://query2.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?period1=${p1}&period2=${p2}&interval=1d&events=history&includeAdjustedClose=true`];
+  for(const url of urls){try{const res=await fetch(url); if(!res.ok) continue; const j=await res.json(); const r=j.chart.result&&j.chart.result[0]; if(!r) continue; const ts=r.timestamp||[], quote=r.indicators.quote[0], adj=(r.indicators.adjclose&&r.indicators.adjclose[0].adjclose)||quote.close; const m={}; ts.forEach((t,i)=>{const k=dateKey(new Date(t*1000)); const val=adj[i]??quote.close[i]; if(Number.isFinite(val))m[k]=val;}); return m;}catch(e){}}
+  throw new Error('Could not fetch '+symbol);
+}
+function fillPrices(dates, raw){let last=null, out={}; for(const d of dates){if(raw[d]!=null) last=raw[d]; if(last!=null) out[d]=last;} return out}
+function externalFlow(tx){ if(tx.action==='deposit'||tx.action==='withdrawal') return tx.cash_flow; return 0; }
+function processSeries(tx, prices, dates){
+  let holdings={}, cash=0, out=[], txByDate={}; tx.forEach(t=>{(txByDate[t.date] ||= []).push(t)});
+  for(let i=0;i<dates.length;i++){
+    const d=dates[i], todays=txByDate[d]||[]; let cf=0;
+    for(const t of todays){
+      const gross=t.quantity*t.price, fee=t.fees||0;
+      if(t.action==='deposit'||t.action==='withdrawal'){ cash += t.cash_flow; cf += t.cash_flow; }
+      else if(t.action==='buy'){ holdings[t.ticker]=(holdings[t.ticker]||0)+t.quantity; cash -= gross + fee; }
+      else if(t.action==='sell'){ holdings[t.ticker]=(holdings[t.ticker]||0)-t.quantity; cash += gross - fee; }
+      else if(t.action==='dividend'||t.action==='interest'){ cash += t.cash_flow; }
+      else if(t.action==='fee'){ cash -= Math.abs(t.cash_flow||fee); }
+    }
+    let value=cash; for(const [sym,q] of Object.entries(holdings)){ value += q*(prices[sym]?.[d] ?? 0); }
+    const prev=out[i-1]; let ret=null; if(prev){ const denom=prev.value + cf; ret = denom!==0 ? (value - prev.value - cf)/denom : null; }
+    out.push({date:d,value,ret,cash,cf,holdings:{...holdings}});
+  }
+  return out;
+}
+function seriesReturns(vals){return vals.map((v,i)=>i===0?null:(v/vals[i-1]-1));}
+function linkedReturn(rets){return rets.filter(Number.isFinite).reduce((a,r)=>a*(1+r),1)-1}
+function mean(a){const x=a.filter(Number.isFinite);return x.length?x.reduce((s,v)=>s+v,0)/x.length:NaN}
+function stdev(a){const x=a.filter(Number.isFinite), m=mean(x);return x.length>1?Math.sqrt(x.reduce((s,v)=>s+(v-m)**2,0)/(x.length-1)):NaN}
+function maxDrawdown(vals){let peak=-Infinity, maxdd=0, dds=[]; vals.forEach(v=>{peak=Math.max(peak,v); const dd=peak>0? v/peak-1:0; dds.push(dd); maxdd=Math.min(maxdd,dd)}); return {maxdd,dds};}
+function covariance(a,b){let pairs=[]; for(let i=0;i<a.length;i++) if(Number.isFinite(a[i])&&Number.isFinite(b[i])) pairs.push([a[i],b[i]]); if(pairs.length<2)return NaN; const ma=mean(pairs.map(p=>p[0])), mb=mean(pairs.map(p=>p[1])); return pairs.reduce((s,p)=>s+(p[0]-ma)*(p[1]-mb),0)/(pairs.length-1)}
+function metrics(rets, benchRets, values, rfAnnual){
+  const n=rets.filter(Number.isFinite).length, total=linkedReturn(rets), ann=(1+total)**(252/Math.max(n,1))-1, vol=stdev(rets)*Math.sqrt(252), rf=rfAnnual/100;
+  const downside=stdev(rets.filter(r=>Number.isFinite(r)&&r<0))*Math.sqrt(252); const beta=covariance(rets,benchRets)/(stdev(benchRets)**2);
+  const benchAnn=(1+linkedReturn(benchRets))**(252/Math.max(n,1))-1; const alpha=ann-(rf+(Number.isFinite(beta)?beta:0)*(benchAnn-rf));
+  const active=rets.map((r,i)=>Number.isFinite(r)&&Number.isFinite(benchRets[i])?r-benchRets[i]:null); const te=stdev(active)*Math.sqrt(252);
+  const up=[] , down=[]; for(let i=0;i<rets.length;i++){if(Number.isFinite(rets[i])&&Number.isFinite(benchRets[i])){ if(benchRets[i]>0) up.push(rets[i]/benchRets[i]); if(benchRets[i]<0) down.push(rets[i]/benchRets[i]); }}
+  return {total,ann,vol,sharpe:(ann-rf)/vol,sortino:(ann-rf)/downside,maxdd:maxDrawdown(values).maxdd,beta,alpha,trackingError:te,informationRatio:(ann-benchAnn)/te,upCapture:mean(up),downCapture:mean(down)};
+}
+function renderTable(id, headers, rows){$(id).innerHTML='<thead><tr>'+headers.map(h=>`<th>${h}</th>`).join('')+'</tr></thead><tbody>'+rows.map(r=>'<tr>'+r.map(c=>`<td>${c}</td>`).join('')+'</tr>').join('')+'</tbody>'}
+function chart(id, labels, datasets){const ctx=$(id); if(id==='growthChart'&&growthChart)growthChart.destroy(); if(id==='drawdownChart'&&drawdownChart)drawdownChart.destroy(); const c=new Chart(ctx,{type:'line',data:{labels,datasets},options:{responsive:true,interaction:{mode:'index',intersect:false},plugins:{legend:{labels:{color:'#cbd7e6'}}},scales:{x:{ticks:{color:'#9eabbc',maxTicksLimit:7},grid:{color:'rgba(255,255,255,.06)'}},y:{ticks:{color:'#9eabbc'},grid:{color:'rgba(255,255,255,.06)'}}}}}); if(id==='growthChart')growthChart=c; else drawdownChart=c;}
+async function analyze(){
+  try{
+    setStatus('Analyzing...'); $('runBtn').disabled=true;
+    const bench=$('benchmarkSelect').value, rf=parseFloat($('riskFree').value)||0;
+    const syms=[...new Set([...uniqueTickers(transactions),...BENCHES])];
+    const start=transactions[0].date, end=dateKey(new Date()); const dates=businessDays(start,new Date(end));
+    const raw={}; for(const s of syms){setStatus('Fetching '+s+'...'); raw[s]=fillPrices(dates, await fetchChart(s,start,end));}
+    setStatus('Calculating...'); const series=processSeries(transactions, raw, dates).filter(x=>x.value!==0 || x.cf!==0);
+    const labels=series.map(x=>x.date), values=series.map(x=>x.value), rets=series.map(x=>x.ret);
+    const benchVals={}; BENCHES.forEach(b=>benchVals[b]=labels.map(d=>raw[b][d]).filter(Number.isFinite));
+    const primaryBenchVals=labels.map(d=>raw[bench][d]); const benchRets=seriesReturns(primaryBenchVals);
+    const pm=metrics(rets, benchRets, values, rf); const bm=metrics(benchRets, benchRets, primaryBenchVals, rf);
+    $('kpiTwr').textContent=fmtPct(pm.total); $('kpiTwr').className='metric '+(pm.total>=bm.total?'good':'bad');
+    $('kpiBench').textContent=fmtPct(bm.total); $('benchLabel').textContent=bench+' over same period'; $('kpiVol').textContent=fmtPct(pm.vol); $('kpiSharpe').textContent=fmtNum(pm.sharpe);
+    const growthP=values.map(v=>10000*v/values[0]); const growthB=primaryBenchVals.map(v=>10000*v/primaryBenchVals[0]);
+    chart('growthChart', labels, [{label:'Portfolio',data:growthP,borderWidth:2,pointRadius:0},{label:bench,data:growthB,borderWidth:2,pointRadius:0}]);
+    const ddP=maxDrawdown(growthP).dds.map(x=>x*100), ddB=maxDrawdown(growthB).dds.map(x=>x*100); chart('drawdownChart', labels, [{label:'Portfolio drawdown %',data:ddP,borderWidth:2,pointRadius:0},{label:bench+' drawdown %',data:ddB,borderWidth:2,pointRadius:0}]);
+    renderTable('scoreTable',['Metric','Portfolio',bench],[['Total return',fmtPct(pm.total),fmtPct(bm.total)],['Annualized return',fmtPct(pm.ann),fmtPct(bm.ann)],['Annualized volatility',fmtPct(pm.vol),fmtPct(bm.vol)],['Sharpe ratio',fmtNum(pm.sharpe),fmtNum(bm.sharpe)],['Sortino ratio',fmtNum(pm.sortino),fmtNum(bm.sortino)],['Max drawdown',fmtPct(pm.maxdd),fmtPct(bm.maxdd)],['Beta vs '+bench,fmtNum(pm.beta),'1.00'],['Alpha vs '+bench,fmtPct(pm.alpha),'—'],['Tracking error',fmtPct(pm.trackingError),'—'],['Information ratio',fmtNum(pm.informationRatio),'—']]);
+    const benchRows=BENCHES.map(b=>{const vals=labels.map(d=>raw[b][d]); const r=seriesReturns(vals); const m=metrics(r,r,vals,rf); return [b,fmtPct(linkedReturn(r)),fmtPct(m.ann),fmtPct(m.vol),fmtNum(m.sharpe),fmtPct(m.maxdd)]}); renderTable('benchTable',['Benchmark','Total','Ann. Return','Ann. Vol','Sharpe','Max DD'],benchRows);
+    const last=series[series.length-1], holds=Object.entries(last.holdings).filter(([s,q])=>Math.abs(q)>1e-8).map(([s,q])=>{const p=raw[s]?.[last.date]||0; return {s,q,p,v:q*p}}).sort((a,b)=>b.v-a.v); const total=last.value;
+    renderTable('holdingsTable',['Ticker','Qty','Price','Value','Weight'],holds.map(h=>[h.s,fmtNum(h.q),fmtUsd(h.p),fmtUsd(h.v),fmtPct(h.v/total)]));
+    renderTable('txTable',['Date','Ticker','Action','Qty','Price','Cash Flow'],transactions.slice(-150).reverse().map(t=>[t.date,t.ticker,t.action,fmtNum(t.quantity),fmtUsd(t.price),fmtUsd(t.cash_flow)]));
+    const top=holds[0]; const concentration=holds.slice(0,5).reduce((s,h)=>s+h.v,0)/total; const msg=[];
+    msg.push(`<div class="kpi-row"><div><strong>Ending portfolio value</strong><div class="muted small">Includes estimated cash balance from transaction history.</div></div><div class="metric">${fmtUsd(total)}</div></div>`);
+    msg.push(`<div class="kpi-row"><div><strong>Excess total return vs ${bench}</strong></div><div class="metric ${pm.total-bm.total>=0?'good':'bad'}">${fmtPct(pm.total-bm.total)}</div></div>`);
+    msg.push(`<div class="kpi-row"><div><strong>Top holding</strong><div class="muted small">${top?top.s:'—'}</div></div><div>${top?fmtPct(top.v/total):'—'}</div></div>`);
+    msg.push(`<div class="kpi-row"><div><strong>Top 5 concentration</strong></div><div>${fmtPct(concentration)}</div></div>`);
+    msg.push(`<p class="small muted">Interpretation: compare the portfolio's annualized return, volatility, Sharpe ratio, and max drawdown against ${bench}. A higher Sharpe with lower drawdown may indicate better risk-adjusted performance even if absolute return is lower.</p>`);
+    $('diagnostics').innerHTML=msg.join(''); setStatus('Complete');
+  } catch(e){console.error(e); setStatus('Error'); alert(e.message + '\n\nIf this is a public-data/CORS issue, use a local or backend data proxy for production.');}
+  finally{$('runBtn').disabled=false;}
+}
+$('csvFile').addEventListener('change', async e=>{const f=e.target.files[0]; if(!f)return; const text=await f.text(); transactions=normalizeTx(parseCSV(text)); $('runBtn').disabled=!transactions.length; setStatus(`Loaded ${transactions.length} transactions`); renderTable('txTable',['Date','Ticker','Action','Qty','Price','Cash Flow'],transactions.slice(-150).reverse().map(t=>[t.date,t.ticker,t.action,fmtNum(t.quantity),fmtUsd(t.price),fmtUsd(t.cash_flow)]));});
+$('sampleBtn').addEventListener('click',()=>{transactions=normalizeTx(parseCSV(SAMPLE)); $('runBtn').disabled=false; setStatus(`Loaded sample: ${transactions.length} transactions`); renderTable('txTable',['Date','Ticker','Action','Qty','Price','Cash Flow'],transactions.slice(-150).reverse().map(t=>[t.date,t.ticker,t.action,fmtNum(t.quantity),fmtUsd(t.price),fmtUsd(t.cash_flow)]));});
+$('runBtn').addEventListener('click',analyze); setStatus('Ready');
+</script>
+</body>
+</html>
